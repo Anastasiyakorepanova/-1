@@ -1,36 +1,22 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "Использование: $0 <входной_каталог> <выходной_каталог>"
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <source_directory> <target_directory>"
     exit 1
 fi
 
-if [ ! -d "$1" ]; then
-    echo "Входной каталог не существует."
-    exit 1
-fi
+src_dir="$1"
+target_dir="$2"
 
-if [ ! -d "$2" ]; then
-    echo "Выходной каталог не существует."
-    exit 1
-fi
+mkdir -p "$target_dir"
 
-function copy_files() {
-    for element in "$1"/*; do
-        if [ -d "$element" ]; then
-            copy_files "$element"
-        elif [ -f "$element" ]; then
-            file_name=$(basename "$element")
-            new_file_name="$file_name"
-            counter=1
-            while [ -f "$2/$new_file_name" ]; do
-                new_file_name="${file_name%.*}_$counter.${file_name##*.}"
-                counter=$((counter + 1))
-            done
+find "$src_dir" -type f -exec bash -c '
+    file="$1"
+    target_file="$2/$(basename "$file")"
 
-            cp "$element" "$2/$new_file_name"
-        fi
-    done
-}
+    if [ -e "$target_file" ]; then
+        target_file="$2/copy_$(basename "$file")"
+    fi
 
-copy_files "$1" "$2"
+    cp "$file" "$target_file"
+' -- {} "$target_dir" \;
